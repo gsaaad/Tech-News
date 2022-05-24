@@ -2,6 +2,8 @@
 
 const Sequelize = require("sequelize");
 
+require("dotenv").config();
+
 // set up connection        //database, username, password
 // const sequelize = new Sequelize("just_tech_news_db", "username", "password", {
 
