@@ -8,7 +8,7 @@ router.get("/", (req, res) => {
 
   User.findAll({
     // hide password for retriving user
-    attributes: { exclude: ["password"] },
+    // attributes: { exclude: ["password"] },
   })
     .then((dbUserData) => res.json(dbUserData))
     .catch((err) => {
@@ -20,7 +20,7 @@ router.get("/", (req, res) => {
 // get single user   => SELECT * FROM users WHERE id = 1
 router.get("/:id", (req, res) => {
   User.findOne({
-    attributes: { exclude: ["password"] },
+    // attributes: { exclude: ["password"] },
   })
     .then((dbUserData) => {
       // didn't find data => no id not found.
@@ -61,12 +61,47 @@ router.post("/", (req, res) => {
     });
 });
 
+// login user
+router.post("/login", (req, res) => {
+  // expects email and password as the inputs
+  // query operation
+  User.findOne({
+    // attributes: { exclude: ["password"] },
+    where: {
+      email: req.body.email,
+    },
+  }).then((dbUserData) => {
+    if (!dbUserData) {
+      res.status(400).json({
+        message:
+          "There's no user with this email in our system... did you want to sign up?",
+      });
+      return;
+    }
+    // res.json({ user: dbUserData quiqui});
+
+    // !First find that account in the db, then verify if its that person
+
+    const validPassword = dbUserData.checkPassword(req.body.password);
+    if (!validPassword) {
+      res.status(400).json({ message: "Incorrect password!" });
+      return;
+    }
+
+    res.json({ user: dbUserData, message: "You are now logged in!" });
+  });
+});
+
 // update user, UPDATE using ID
-router.put(":id", (req, res) => {
+router.put("/:id", (req, res) => {
   // expects {username, email, password}
 
   User.update(req.body, {
     // condition meet, extract search parameters
+
+    // allow hooks
+    individualHooks: true,
+    // based on condition:
     where: {
       id: req.params.id,
     },
@@ -76,8 +111,9 @@ router.put(":id", (req, res) => {
         res.status(404).json({
           message: "Theres no user found with that ID.. Try Again!",
         });
-        res.json(dbUserData);
+        return;
       }
+      res.json(dbUserData);
     })
     .catch((err) => {
       console.log(err);

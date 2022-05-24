@@ -3,9 +3,16 @@
 // Model and DataTypes from sequelize which create a model, when you add a variable, use DataTypes to input its prototype, data
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/connection");
+const bcrypt = require("bcrypt");
 
 // create User Model
-class User extends Model {}
+class User extends Model {
+  // method for user to check password
+  checkPassword(loginPw) {
+    // ! Remember: user has properties username, email, password!
+    return bcrypt.compareSync(loginPw, this.password);
+  }
+}
 
 // define table columns/data and configuration
 
@@ -53,6 +60,21 @@ User.init(
 
   //   pass in our imported sequelize connection (the direction connection to our database)
   {
+    hooks: {
+      // before creating, hash the password with 10 rounds and return
+      async beforeCreate(newUserData) {
+        newUserData.password = await bcrypt.hash(newUserData.password, 10);
+        return newUserData;
+      },
+      // before updating PUT user, hash password
+      async beforeUpdate(updatedUserData) {
+        updatedUserData.password = await bcrypt.hash(
+          updatedUserData.password,
+          10
+        );
+        return updatedUserData;
+      },
+    },
     sequelize,
     // don't automateically create createdAt/updatedAt timestamp fields
     timestamps: false,
