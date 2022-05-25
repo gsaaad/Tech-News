@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { User } = require("../../models");
+const { User, Post, Vote } = require("../../models");
 
 // get all users   => EQUIVILANT TO SELECT * FROM users;
 
@@ -20,7 +20,19 @@ router.get("/", (req, res) => {
 // get single user   => SELECT * FROM users WHERE id = 1
 router.get("/:id", (req, res) => {
   User.findOne({
-    // attributes: { exclude: ["password"] },
+    attributes: { exclude: ["password"] },
+    include: [
+      {
+        model: Post,
+        attributes: ["id", "title", "post_url", "created_at"],
+      },
+      {
+        model: Post,
+        attributes: ["title"],
+        through: Vote,
+        as: "voted_posts",
+      },
+    ],
   })
     .then((dbUserData) => {
       // didn't find data => no id not found.
