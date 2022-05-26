@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { Post, User } = require("../../models");
+const { Post, User, Vote, Comment } = require("../../models");
 const sequelize = require("sequelize");
 
 //  get all posts
@@ -34,15 +34,42 @@ router.get("/", (req, res) => {
 
 // get post by ID
 router.get("/:id", (req, res) => {
-  Post.findOne({
+  // Post.findOne({
+  //   where: {
+  //     id: req.params.id,
+  //   },
+  //   attributes: ["id", "post_url", "title", "created_at"],
+  //   include: [
+  //     {
+  //       model: User,
+  //       attributes: ["username"],
+  //     },
+  //   ],
+  // })
+  User.findOne({
+    attributes: { exclude: ["password"] },
     where: {
       id: req.params.id,
     },
-    attributes: ["id", "post_url", "title", "created_at"],
     include: [
       {
-        model: User,
-        attributes: ["username"],
+        model: Post,
+        attributes: ["id", "title", "post_url", "created_at"],
+      },
+      // include the Comment model here:
+      {
+        model: Comment,
+        attributes: ["id", "comment_text", "created_at"],
+        include: {
+          model: Post,
+          attributes: ["title"],
+        },
+      },
+      {
+        model: Post,
+        attributes: ["title"],
+        through: Vote,
+        as: "voted_posts",
       },
     ],
   })
